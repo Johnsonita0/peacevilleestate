@@ -1,0 +1,39 @@
+.api-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #78827d;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.api-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #d3a454;
+}
+
+.api-status-online {
+  color: #35735e;
+}
+
+.api-status-online .api-status-dot {
+  background: #4a9b70;
+}
+
+.api-status-offline {
+  color: #a85e42;
+}
+
+.api-status-offline .api-status-dot {
+  background: #cc7653;
+}
+
+@media (max-width: 700px) {
+  .api-status {
+    gap: 0;
+    font-size: 0;
+  }
+}
