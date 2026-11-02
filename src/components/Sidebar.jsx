@@ -1,24 +1,34 @@
 import {
+  Building2,
   CircleHelp,
   ChevronDown,
+  ClipboardList,
   CreditCard,
   LayoutDashboard,
+  LogOut,
+  Megaphone,
   MessageSquareText,
   ShieldCheck,
   UserRoundPlus,
   UsersRound,
 } from 'lucide-react'
+import ProfilePhotoUpload from './ProfilePhotoUpload'
 
 const navigation = [
   { label: 'Overview', icon: LayoutDashboard },
   { label: 'Residents', icon: UsersRound },
   { label: 'Visitors', icon: UserRoundPlus },
   { label: 'Payments', icon: CreditCard },
-  { label: 'Incidents', icon: ShieldCheck },
+  { label: 'Security', icon: ShieldCheck },
   { label: 'Messages', icon: MessageSquareText },
+  { label: 'Ads', icon: Megaphone },
+  { label: 'Compounds and units', icon: Building2 },
+  { label: 'Staff and roles', icon: UsersRound },
+  { label: 'Reports', icon: ClipboardList },
+  { label: 'More', icon: CircleHelp },
 ]
 
-function Sidebar({ activeSection, onNavigate }) {
+function Sidebar({ activeSection, onNavigate, onSignOut }) {
   return (
     <aside className="sidebar">
       <a className="brand" href="#overview" onClick={() => onNavigate('Overview')}>
@@ -41,18 +51,15 @@ function Sidebar({ activeSection, onNavigate }) {
           >
             <Icon size={18} strokeWidth={1.8} />
             <span>{label}</span>
-            {label === 'Incidents' && <span className="nav-count">2</span>}
+            {label === 'Security' && <span className="nav-count">2</span>}
           </button>
         ))}
       </nav>
       <div className="sidebar-bottom">
         <button className="nav-item"><CircleHelp size={18} strokeWidth={1.8} /><span>Help centre</span></button>
+        <button className="nav-item" onClick={onSignOut}><LogOut size={18} strokeWidth={1.8} /><span>Sign out</span></button>
         <div className="sidebar-rule" />
-        <button className="account-row">
-          <span className="account-avatar">AO</span>
-          <span className="account-copy"><strong>Amara Okafor</strong><small>Estate administrator</small></span>
-          <span className="account-more">···</span>
-        </button>
+        <ProfilePhotoUpload />
       </div>
     </aside>
   )

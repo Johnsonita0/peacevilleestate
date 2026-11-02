@@ -16,7 +16,6 @@ function PageHeading({ title, description, actionLabel, onAction }) {
         <p>{description}</p>
       </div>
       <div className="heading-actions">
-        <span className="preview-badge"><span />Preview data</span>
         {actionLabel && <button className="button button-primary" onClick={onAction}><Plus size={17} />{actionLabel}</button>}
       </div>
     </div>

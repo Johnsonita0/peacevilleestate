@@ -1,0 +1,19 @@
+.profile-photo-uploader { position: relative; min-width: 0; }
+.profile-photo-button { width: 100%; min-width: 0; min-height: 46px; display: flex; align-items: center; gap: 9px; padding: 5px 3px; border: 0; border-radius: 6px; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.profile-photo-button:hover { background: rgba(130, 153, 171, .12); }
+.profile-photo-button:focus-visible { outline: 2px solid #e8bd80; outline-offset: 2px; }
+.profile-photo-button:disabled { cursor: progress; opacity: .7; }
+.profile-photo-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border-radius: 50%; color: #684c36; background: #e7c7a6; font-size: 10px; font-weight: 700; }
+.profile-photo-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-photo-copy { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: 4px; }
+.profile-photo-copy strong, .profile-photo-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-photo-copy strong { color: inherit; font-size: 10px; font-weight: 600; }
+.profile-photo-copy small { color: #a7c0b3; font-size: 9px; }
+.profile-photo-camera { flex: 0 0 auto; color: #a7c0b3; }
+.profile-photo-error { display: block; padding: 3px 4px; color: #a83b31; font-size: 10px; line-height: 1.4; }
+.profile-photo-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.role-dashboard-header .profile-photo-button { width: auto; min-height: 44px; padding: 2px; }
+.role-dashboard-header .profile-photo-avatar { width: 38px; height: 38px; }
+.profile-photo-uploader.compact .profile-photo-button { width: 46px; min-height: 46px; justify-content: center; }
+.profile-photo-uploader.compact .profile-photo-camera { position: absolute; right: 0; bottom: 0; width: 17px; height: 17px; padding: 3px; border: 1px solid #fff; border-radius: 50%; color: #fff; background: #20534b; }
+@media (max-width: 700px) { .profile-photo-error { max-width: 220px; } }

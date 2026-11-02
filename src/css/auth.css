@@ -26,12 +26,13 @@
   height: 35px;
   display: grid;
   place-items: center;
+  margin-inline: auto;
   border-radius: 11px;
   color: #e8c25d;
   background: #1b2c4d;
 }
 
-.auth-heading { margin-top: 16px; }
+.auth-heading { margin-top: 16px; text-align: center; }
 .auth-heading h1 {
   margin: 0;
   color: #1a2844;
@@ -42,6 +43,7 @@
 }
 .auth-heading p {
   margin: 5px 0 0;
+  margin-inline: auto;
   color: #74829a;
   font-size: 9px;
   line-height: 1.45;
@@ -110,10 +112,19 @@
 }
 
 @media (min-width: 521px) {
-  .auth-stage { padding: 32px 24px; background: #f2f1eb; }
+  .auth-stage {
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;
+    padding: 32px 24px;
+    background: #f2f1eb;
+  }
   .auth-screen {
     width: min(100%, 460px);
     height: min(680px, calc(100svh - 64px));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     aspect-ratio: auto;
     padding: 56px 44px;
     border: 1px solid #e7e4dc;
@@ -135,6 +146,21 @@
   .auth-submit, .auth-secondary { min-height: 46px; font-size: 12px; }
   .auth-notice { font-size: 10px; }
   .auth-footnote { right: 12%; bottom: 28px; left: 12%; font-size: 9px; }
+}
+
+@media (min-width: 521px) and (max-height: 720px) {
+  .auth-screen {
+    height: calc(100svh - 32px);
+    min-height: 0;
+    padding: 28px 40px;
+  }
+  .auth-stage { padding: 16px 24px; }
+  .auth-heading { margin-top: 14px; }
+  .auth-heading h1 { font-size: 22px; }
+  .auth-form { gap: 9px; margin-top: 18px; }
+  .auth-field input { height: 40px; }
+  .auth-submit, .auth-secondary { min-height: 40px; }
+  .auth-footnote { bottom: 14px; }
 }
 
 @media (max-width: 520px) {
@@ -170,3 +196,5 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-screen { animation-duration: .01ms; }
 }
+
+.registration-role-summary{display:grid;gap:4px;padding:10px 11px;border:1px solid #e4ddd3;border-radius:9px;background:#f4f1ea}.registration-role-summary span{color:#7d6031;font-size:9px;font-weight:800;text-transform:uppercase}.registration-role-summary strong{color:#1d2e48;font-size:12px;text-transform:capitalize}.registration-role-summary small{color:#75808d;font-size:9px}.registration-success{display:grid;justify-items:center;gap:9px;margin-top:24px;padding:22px;border:1px solid #dfeae2;border-radius:12px;color:#2d6a45;background:#f4f8f4;text-align:center}.registration-success strong{font-family:Manrope,Georgia,serif;font-size:16px}.registration-success span{color:#66766d;font-size:11px;line-height:1.5}
