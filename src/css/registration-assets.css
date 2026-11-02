@@ -1,0 +1,91 @@
+.public-registration-stage {
+  min-height: 100svh;
+  padding: 28px 16px;
+  background: #eef0ed;
+}
+
+.business-registration-screen {
+  width: min(100%, 560px);
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  overflow: visible;
+  padding: 32px;
+  border: 1px solid #e3e5e1;
+  border-radius: 12px;
+  background: #fffefa;
+  box-shadow: 0 16px 42px rgb(22 32 48 / 9%);
+}
+
+.business-registration-screen .auth-content {
+  max-width: none;
+}
+
+.business-registration-screen .auth-form {
+  gap: 12px;
+}
+
+.business-registration-screen .auth-field input,
+.business-registration-screen .auth-field select {
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #d9dce1;
+  border-radius: 9px;
+  color: #203047;
+  background-color: #fff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.business-registration-screen .auth-field input[type='file'] {
+  height: auto;
+  min-height: 54px;
+  padding: 10px;
+  color: #647083;
+  background: #f8f8f5;
+}
+
+.business-registration-screen .auth-field input:focus-visible,
+.business-registration-screen .auth-field select:focus-visible {
+  outline: 2px solid #637f9d;
+  outline-offset: 2px;
+}
+
+.business-registration-screen .auth-field > span {
+  font-size: 11px;
+}
+
+.business-registration-screen .auth-submit {
+  min-height: 46px;
+  font-size: 13px;
+}
+
+.business-registration-screen .auth-footnote {
+  position: static;
+  margin: 20px auto 0;
+  max-width: 420px;
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .public-registration-stage {
+    display: block;
+    padding: 0;
+    background: #fffefa;
+  }
+
+  .business-registration-screen {
+    width: 100%;
+    min-height: 100svh;
+    padding: max(28px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .business-registration-screen .auth-footnote {
+    margin-top: 24px;
+  }
+}

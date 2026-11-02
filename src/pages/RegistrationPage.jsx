@@ -13,6 +13,7 @@ function RegistrationPage() {
   const completionStarted = useRef(false)
   const [invitation, setInvitation] = useState(null)
   const [form, setForm] = useState({ full_name: '', phone: '', password: '' })
+  const [profilePhoto, setProfilePhoto] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [complete, setComplete] = useState(false)
@@ -62,6 +63,15 @@ function RegistrationPage() {
     setSubmitting(true)
     setNotice('')
     try {
+      if (profilePhoto) {
+        const upload = await api.post('/registrations/invitations/upload-url', {
+          token,
+          content_type: profilePhoto.type,
+        })
+        const { error: uploadError } = await supabase.storage.from('registration-uploads')
+          .uploadToSignedUrl(upload.path, upload.token, profilePhoto, { contentType: profilePhoto.type })
+        if (uploadError) throw uploadError
+      }
       const { data, error } = await supabase.auth.signUp({
         email: invitation.email,
         password: form.password,
@@ -106,6 +116,7 @@ function RegistrationPage() {
               <label className="auth-field"><span>Email address</span><input type="email" value={invitation.email} readOnly aria-readonly="true" /></label>
               <label className="auth-field"><span>Full name</span><input autoComplete="name" maxLength={120} value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} required /></label>
               <label className="auth-field"><span>Phone number</span><input type="tel" autoComplete="tel" maxLength={40} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required /></label>
+              <label className="auth-field"><span>Profile photo (optional)</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setProfilePhoto(event.target.files?.[0] ?? null)} /></label>
               <label className="auth-field"><span>Create password</span><input type="password" autoComplete="new-password" minLength={10} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></label>
               <button className="auth-submit" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit registration'}</button>
             </form>

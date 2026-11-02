@@ -31,6 +31,14 @@
   background: #cc7653;
 }
 
+.api-status-setup {
+  color: #a45b25;
+}
+
+.api-status-setup .api-status-dot {
+  background: #d78a3e;
+}
+
 @media (max-width: 700px) {
   .api-status {
     gap: 0;

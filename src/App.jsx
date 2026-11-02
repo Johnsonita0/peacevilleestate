@@ -11,6 +11,7 @@ import ProtectedRoute from './auth/ProtectedRoute'
 import SplashPage from './pages/SplashPage'
 
 const SignInPage = lazy(() => import('./pages/SignInPage'))
+const BusinessRegistrationPage = lazy(() => import('./pages/BusinessRegistrationPage'))
 const EstateDashboardPage = lazy(() => import('./pages/EstateDashboardPage'))
 const RoleDashboardPage = lazy(() => import('./pages/RoleDashboardPage'))
 const SecurityDashboardPage = lazy(() => import('./pages/SecurityDashboardPage'))
@@ -37,6 +38,7 @@ function App() {
         <Route path="/" element={<SignInPortal portal="resident" />} />
         <Route path="/admin" element={<SignInPortal portal="admin" />} />
         <Route path="/register" element={<RegistrationPage />} />
+        <Route path="/business-register" element={<BusinessRegistrationPage />} />
         <Route
           path="/admin/dashboard"
           element={(

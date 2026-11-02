@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Download, Filter, Plus, Search, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { api } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import '../css/admin-dashboard.css'
 import '../css/admin-workspace.css'
+import '../css/admin-form-controls.css'
 
 const sectionConfig = {
   Residents: { description: 'Resident register and household access.', add: 'Invite account', tabs: ['All', 'Landlords', 'Tenants', 'Pending'], table: 'profiles' },
@@ -13,9 +15,9 @@ const sectionConfig = {
   'Levies and fees': { description: 'Amounts and due dates by estate or compound.', add: 'Add levy', table: 'levies' },
   Announcements: { description: 'Notices for residents and compounds.', add: 'New announcement', tabs: ['All', 'draft', 'published', 'archived'], table: 'announcements' },
   Meetings: { description: 'Schedule meetings and track attendance.', add: 'Schedule meeting', table: 'meetings' },
-  'Compounds and units': { description: 'Blocks, units and occupancy coverage.', add: 'Add compound', table: 'compounds' },
+  'Compounds and units': { description: 'Create a compound and its numbered units together.', add: 'Add compound + units', table: 'compounds' },
   'Staff and roles': { description: 'Administrators, representatives and guards.', add: 'Add staff member', table: 'compound_staff' },
-  'Businesses and institutions': { description: 'Schools, churches, shops and companies managed by the estate.', add: 'Add business or institution', tabs: ['All', 'pending', 'active', 'suspended'], table: 'businesses' },
+  'Businesses and institutions': { description: 'Schools, churches, shops and companies managed by the estate.', add: 'Invite business', tabs: ['All', 'pending', 'active', 'suspended'], table: 'businesses' },
   'Commercial levy rates': { description: 'Standard levy rates by business and institution type.', add: 'Add levy rate', table: 'commercial_levy_rates' },
   'Audit log': { description: 'A read-only record of administrative activity.', tabs: ['All', 'Payments', 'Access', 'Residents'], table: 'audit_logs' },
   Settings: { description: 'Estate access, session, and notification settings.', table: 'estate_settings' },
@@ -31,6 +33,7 @@ const resourceBySection = {
 
 const estateTypeOptions = ['residential', 'mixed_use', 'church', 'school', 'shop', 'office', 'clinic', 'restaurant', 'warehouse', 'other']
 const unitTypeOptions = ['house', 'apartment', 'residential', 'church', 'school', 'shop', 'office', 'clinic', 'restaurant', 'warehouse', 'other']
+const primarySuperAdminId = '0adc9938-2343-4f7c-b4d7-5b1df229c7c5'
 
 function displayRow(section, row) {
   if (section === 'Residents') return { id: row.id, name: row.full_name || row.email || row.phone || 'Resident', location: row.phone || row.email || 'Household not assigned', status: row.status, amount: row.role?.replaceAll('_', ' ') }
@@ -49,9 +52,9 @@ function displayRow(section, row) {
 const addFields = {
   Residents: [
     { name: 'email', label: 'Email', type: 'email', required: true },
-    { name: 'role', label: 'Account type', type: 'select', options: ['tenant', 'landlord', 'compound_rep', 'compound_security', 'estate_security', 'estate_admin', 'super_admin'] },
+    { name: 'role', label: 'Account type', type: 'select', options: ['tenant', 'landlord', 'compound_rep', 'compound_security', 'estate_security', 'estate_admin'] },
+    { name: 'compound_id', label: 'Compound', type: 'select', required: true },
     { name: 'unit_id', label: 'Home unit', type: 'select', required: true },
-    { name: 'compound_id', label: 'Assigned compound', type: 'select', required: true },
     { name: 'gate', label: 'Assigned gate', required: true },
   ],
   'Staff and roles': [{ name: 'user_id', label: 'Staff account', type: 'select', required: true }, { name: 'compound_id', label: 'Compound', type: 'select', required: true }, { name: 'staff_role', label: 'Staff role', type: 'select', options: ['compound_security', 'estate_security', 'compound_rep'] }, { name: 'duty_status', label: 'Duty status', type: 'select', options: ['off_duty', 'on_duty', 'on_break'] }, { name: 'gate', label: 'Gate or post' }],
@@ -63,17 +66,13 @@ const addFields = {
     { name: 'address', label: 'Address' },
     { name: 'estate_type', label: 'Estate type', type: 'select', options: estateTypeOptions },
     { name: 'unit_type', label: 'Default unit type', type: 'select', options: unitTypeOptions },
-    { name: 'unit_count', label: 'Number of units to create', type: 'number', required: true },
+    { name: 'unit_count', label: 'Number of units', type: 'number', required: true },
+    { name: 'image', label: 'Compound image (optional)', type: 'file' },
   ],
   'Businesses and institutions': [
-    { name: 'name', label: 'Business or institution name', required: true },
-    { name: 'type', label: 'Type', type: 'select', options: ['school', 'church', 'mosque', 'shop', 'company', 'other'] },
-    { name: 'location', label: 'Location', required: true },
-    { name: 'contact_person', label: 'Contact person' },
-    { name: 'phone', label: 'Phone number', required: true },
-    { name: 'website', label: 'Website (optional)' },
-    { name: 'billing_cycle', label: 'Billing cycle', type: 'select', options: ['annual', 'quarterly', 'monthly'] },
-    { name: 'may_advertise', label: 'May advertise', type: 'select', options: ['Yes', 'No'] },
+    { name: 'email', label: 'Business contact email', type: 'email', required: true },
+    { name: 'compound_id', label: 'Compound (optional)', type: 'select' },
+    { name: 'unit_id', label: 'Unit (optional)', type: 'select' },
   ],
   'Commercial levy rates': [
     { name: 'entity_type', label: 'Entity type', type: 'select', options: ['school', 'church', 'mosque', 'shop', 'company', 'other'] },
@@ -84,6 +83,7 @@ const addFields = {
 
 function AdminWorkspacePage({ section, onNavigate }) {
   const { session } = useAuth()
+  const isPrimarySuperAdmin = session?.user?.id === primarySuperAdminId
   const config = sectionConfig[section] ?? { description: 'Estate management workspace.' }
   const [rows, setRows] = useState([])
   const [availableUnits, setAvailableUnits] = useState([])
@@ -97,6 +97,8 @@ function AdminWorkspacePage({ section, onNavigate }) {
   const [form, setForm] = useState({})
   const [notice, setNotice] = useState('')
   const [registrationLink, setRegistrationLink] = useState('')
+  const [invitationEmail, setInvitationEmail] = useState('')
+  const [compoundImage, setCompoundImage] = useState(null)
 
   useEffect(() => {
     if (!notice) return undefined
@@ -119,7 +121,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
         if (!mounted) return
         setRows((data ?? []).map((row) => displayRow(section, row)))
         if (section === 'Settings') setSettings(data?.[0] ?? null)
-        if (section === 'Residents') {
+        if (['Residents', 'Businesses and institutions'].includes(section)) {
           try {
             const unitsResult = await api.get('/admin/resources/units', { accessToken: session.access_token })
             if (mounted) setAvailableUnits(unitsResult.data ?? [])
@@ -127,7 +129,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
             console.error('Resident invitation units could not be loaded:', error)
           }
         }
-        if (['Residents', 'Staff and roles', 'Levies and fees', 'Announcements', 'Meetings'].includes(section)) {
+        if (['Residents', 'Staff and roles', 'Levies and fees', 'Announcements', 'Meetings', 'Businesses and institutions'].includes(section)) {
           const compoundResult = await api.get('/admin/resources/compounds', { accessToken: session.access_token })
           if (mounted) setAvailableCompounds(compoundResult.data ?? [])
           if (section === 'Staff and roles') {
@@ -141,7 +143,9 @@ function AdminWorkspacePage({ section, onNavigate }) {
         console.error(`Admin ${section} data could not be loaded:`, error)
         if (mounted) {
           setRows([])
-          setNotice('Live estate data could not be loaded. Check the API and database connection.')
+          setNotice(error?.payload?.error === 'AUTH_CONFIGURATION_MISSING'
+            ? 'Supabase is not configured for the API. Set the backend environment values and restart it.'
+            : 'Live estate data could not be loaded. Check the API and database connection.')
           setLoading(false)
         }
       })
@@ -155,6 +159,9 @@ function AdminWorkspacePage({ section, onNavigate }) {
       || (section === 'Residents' && ['Landlords', 'Tenants'].includes(tab) ? row.amount === tab.slice(0, -1).toLowerCase() : row.status?.toLowerCase() === tab.toLowerCase())
     return matchesText && matchesTab
   }), [rows, query, tab, section])
+  const formUnits = form.compound_id
+    ? availableUnits.filter((unit) => unit.compound_id === form.compound_id)
+    : availableUnits
 
   async function submitForm(event) {
     event.preventDefault()
@@ -167,7 +174,10 @@ function AdminWorkspacePage({ section, onNavigate }) {
     const values = { ...form }
     if (section === 'Residents') {
       values.role = values.role || 'tenant'
-      if (['tenant', 'landlord', 'compound_rep'].includes(values.role)) values.unit_id = values.unit_id || availableUnits[0]?.id
+      if (['tenant', 'landlord', 'compound_rep'].includes(values.role)) {
+        values.unit_id = values.unit_id || formUnits[0]?.id
+        delete values.compound_id
+      }
       if (['compound_security', 'estate_security'].includes(values.role)) values.compound_id = values.compound_id || availableCompounds[0]?.id
     }
     if (section === 'Levies and fees') values.amount = Number(values.amount)
@@ -185,9 +195,11 @@ function AdminWorkspacePage({ section, onNavigate }) {
       values.unit_count = Number(values.unit_count)
     }
     if (section === 'Businesses and institutions') {
-      values.type = values.type || 'other'
+      values.type = values.type || 'school'
       values.status = 'pending'
-      values.may_advertise = values.may_advertise === 'Yes'
+      if (values.unit_id && !values.compound_id) {
+        values.compound_id = availableUnits.find((unit) => unit.id === values.unit_id)?.compound_id
+      }
     }
     if (section === 'Commercial levy rates') {
       values.rate_amount = Number(values.rate_amount)
@@ -195,21 +207,45 @@ function AdminWorkspacePage({ section, onNavigate }) {
     }
 
     let result
+    let followUpNotice = ''
     try {
       if (section === 'Residents') {
         result = await api.post('/admin/accounts/invitations', values, { accessToken: session.access_token })
+      } else if (section === 'Businesses and institutions') {
+        result = await api.post('/admin/business-invitations', values, { accessToken: session.access_token })
+      } else if (section === 'Compounds and units') {
+        const { data: compound } = await api.post(`/admin/resources/${resourceName}`, values, { accessToken: session.access_token })
+        if (compoundImage) {
+          try {
+            if (!supabase || compoundImage.size > 8 * 1024 * 1024) throw new Error('Choose an image smaller than 8 MB.')
+            const upload = await api.post(`/admin/compounds/${compound.id}/image-upload-url`, { content_type: compoundImage.type }, { accessToken: session.access_token })
+            const { error } = await supabase.storage.from('compound-images')
+              .uploadToSignedUrl(upload.path, upload.token, compoundImage, { contentType: compoundImage.type })
+            if (error) throw error
+            await api.patch(`/admin/resources/compounds/${compound.id}`, { image_path: upload.path }, { accessToken: session.access_token })
+          } catch (error) {
+            console.error('Compound image upload failed:', error)
+            followUpNotice = 'Compound and units were created, but the image could not be uploaded. You can retry from the compound record.'
+          }
+        }
       } else {
         await api.post(`/admin/resources/${resourceName}`, values, { accessToken: session.access_token })
       }
     } catch (error) {
       console.error(`Failed to save ${section}:`, error)
-      setNotice('We could not save this change. Please try again.')
+      setNotice(error?.payload?.error === 'AUTH_CONFIGURATION_MISSING'
+        ? 'Supabase is not configured for the API. Set the backend environment values and restart it.'
+        : 'We could not save this change. Please try again.')
       return
     }
 
-    setNotice(section === 'Residents' ? 'Registration link created. Share it with the invited person.' : 'Saved successfully.')
-    if (section === 'Residents') setRegistrationLink(result.registration_url)
+    setNotice(followUpNotice || (['Residents', 'Businesses and institutions'].includes(section) ? 'Registration invitation link created.' : 'Saved successfully.'))
+    if (['Residents', 'Businesses and institutions'].includes(section)) {
+      setRegistrationLink(result.registration_url)
+      setInvitationEmail(result.email)
+    }
     setForm({})
+    setCompoundImage(null)
     setShowForm(false)
     try {
       const { data } = await api.get(`/admin/resources/${resourceName}`, { accessToken: session.access_token })
@@ -312,7 +348,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
     }
   }
 
-  const canAdd = Boolean(config.add)
+  const canAdd = Boolean(config.add) && (!['Residents', 'Businesses and institutions'].includes(section) || isPrimarySuperAdmin)
   const formFields = addFields[section] ?? []
 
   return (
@@ -320,7 +356,14 @@ function AdminWorkspacePage({ section, onNavigate }) {
       <div className="admin-workspace-heading">
         <div><h1>{section}</h1><p>{config.description}</p></div>
         <div className="admin-workspace-tools">
-          {canAdd && <button className="admin-primary-button" type="button" onClick={() => { setForm(section === 'Residents' ? { role: 'tenant' } : {}); setShowForm(true) }}><Plus size={16} />{config.add}</button>}
+          {canAdd && <button className="admin-primary-button" type="button" disabled={loading} onClick={() => {
+            const firstCompound = availableCompounds[0]
+            const firstUnit = availableUnits.find((unit) => unit.compound_id === firstCompound?.id)
+            setForm(section === 'Residents'
+              ? { role: 'tenant', compound_id: firstCompound?.id ?? '', unit_id: firstUnit?.id ?? '' }
+              : {})
+            setShowForm(true)
+          }}><Plus size={16} />{config.add}</button>}
         </div>
       </div>
 
@@ -329,9 +372,12 @@ function AdminWorkspacePage({ section, onNavigate }) {
       {registrationLink && (
         <div className="admin-modal-backdrop" role="presentation">
           <div className="admin-ad-form" role="dialog" aria-modal="true" aria-labelledby="registration-link-title">
-            <div className="admin-form-heading"><div><h2 id="registration-link-title">Registration link ready</h2><p>It is tied to the selected email and expires in 7 days.</p></div><button type="button" className="admin-icon-button" aria-label="Close" onClick={() => setRegistrationLink('')}><X size={18} /></button></div>
+            <div className="admin-form-heading"><div><h2 id="registration-link-title">{section === 'Businesses and institutions' ? 'Business registration link ready' : 'Resident registration link ready'}</h2><p>It is tied to {invitationEmail} and expires in 7 days.</p></div><button type="button" className="admin-icon-button" aria-label="Close" onClick={() => setRegistrationLink('')}><X size={18} /></button></div>
             <label>Share this link<input readOnly value={registrationLink} onFocus={(event) => event.target.select()} /></label>
-            <button className="admin-primary-button" type="button" onClick={async () => { try { await navigator.clipboard.writeText(registrationLink); setNotice('Registration link copied.') } catch (error) { console.error('Registration link copy failed:', error); setNotice('Copy is unavailable. Select and copy the link.') } }}>Copy link</button>
+            <div className="admin-invitation-actions">
+              <button className="admin-primary-button" type="button" onClick={async () => { try { await navigator.clipboard.writeText(registrationLink); setNotice('Registration link copied.') } catch (error) { console.error('Registration link copy failed:', error); setNotice('Copy is unavailable. Select and copy the link.') } }}>Copy link</button>
+              <a className="admin-secondary-button" href={`mailto:${encodeURIComponent(invitationEmail)}?subject=${encodeURIComponent('Complete your Peaceville registration')}&body=${encodeURIComponent(`Use this secure link to complete your registration. It expires in 7 days:\n\n${registrationLink}`)}`}>Email invitation</a>
+            </div>
           </div>
         </div>
       )}
@@ -350,23 +396,32 @@ function AdminWorkspacePage({ section, onNavigate }) {
         <div className="admin-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowForm(false) }}>
           <form className="admin-ad-form" onSubmit={submitForm}>
             <div className="admin-form-heading"><div><h2>{config.add}</h2><p>Required fields are marked in the form.</p></div><button type="button" className="admin-icon-button" aria-label="Close" onClick={() => setShowForm(false)}><X size={18} /></button></div>
-            {formFields.filter((field) => field.name !== 'unit_id' || ['tenant', 'landlord', 'compound_rep'].includes(form.role ?? 'tenant')).filter((field) => !['compound_id', 'gate'].includes(field.name) || ['compound_security', 'estate_security'].includes(form.role)).map((field) => (
+            {formFields.filter((field) => field.name !== 'unit_id' || ['Residents', 'Businesses and institutions'].includes(section) || ['tenant', 'landlord', 'compound_rep'].includes(form.role ?? 'tenant')).filter((field) => field.name !== 'gate' || ['compound_security', 'estate_security'].includes(form.role)).filter((field) => field.name !== 'compound_id' || section !== 'Businesses and institutions' || availableCompounds.length > 0).filter((field) => field.name !== 'unit_id' || section !== 'Businesses and institutions' || availableUnits.length > 0).map((field) => (
               <label key={field.name}>{field.label}
-                {field.name === 'compound_id' && section === 'Announcements' && form.scope !== 'compound' ? null : field.type === 'textarea'
+                {field.name === 'compound_id' && section === 'Announcements' && form.scope !== 'compound' ? null : field.type === 'file'
+                  ? <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setCompoundImage(event.target.files?.[0] ?? null)} />
+                  : field.type === 'textarea'
                   ? <textarea required={field.required} rows="3" value={form[field.name] ?? ''} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })} />
                   : field.type === 'select'
-                    ? <select required={field.required || (field.name === 'compound_id' && section === 'Announcements' && form.scope === 'compound')} value={form[field.name] ?? (field.name === 'unit_id' ? availableUnits[0]?.id ?? '' : field.name === 'user_id' ? availableStaff[0]?.id ?? '' : field.name === 'compound_id' ? section === 'Announcements' ? availableCompounds[0]?.id ?? '' : '' : field.options[0])} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}>
+                    ? <select required={field.required || (field.name === 'compound_id' && section === 'Announcements' && form.scope === 'compound')} value={form[field.name] ?? (field.name === 'unit_id' ? '' : field.name === 'user_id' ? availableStaff[0]?.id ?? '' : field.name === 'compound_id' ? section === 'Announcements' || section === 'Residents' ? availableCompounds[0]?.id ?? '' : '' : field.options?.[0] ?? '')} onChange={(event) => setForm({ ...form, [field.name]: event.target.value, ...(field.name === 'compound_id' ? { unit_id: '' } : {}) })}>
                       {(field.name === 'unit_id'
-                        ? availableUnits.map((unit) => ({ value: unit.id, label: `${unit.unit_number} · ${Array.isArray(unit.compounds) ? unit.compounds[0]?.name : unit.compounds?.name || unit.compound_id}` }))
+                        ? [...(formUnits.length ? [{ value: '', label: field.required ? 'Choose a unit' : 'No unit' }] : [{ value: '', label: 'No units available', disabled: true }]), ...formUnits.map((unit) => ({ value: unit.id, label: `${unit.unit_number} · ${Array.isArray(unit.compounds) ? unit.compounds[0]?.name : unit.compounds?.name || unit.compound_id}` }))]
                         : field.name === 'user_id'
                           ? availableStaff.map((staff) => ({ value: staff.id, label: staff.full_name || staff.email || staff.phone }))
                           : field.name === 'compound_id'
-                            ? [...(section === 'Announcements' ? [] : [{ value: '', label: 'All compounds' }]), ...availableCompounds.map((compound) => ({ value: compound.id, label: compound.name }))]
-                            : field.options.map((option) => ({ value: option, label: option }))).map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+                            ? [...(field.required ? (availableCompounds.length ? [] : [{ value: '', label: 'No compounds available', disabled: true }]) : [{ value: '', label: section === 'Announcements' ? 'All compounds' : 'No compound' }]), ...availableCompounds.map((compound) => ({ value: compound.id, label: compound.name }))]
+                            : field.options.map((option) => ({ value: option, label: option }))).map((option) => <option value={option.value} key={option.value || 'none'} disabled={option.disabled}>{option.label}</option>)}
                     </select>
                     : <input type={field.type ?? 'text'} min={field.type === 'number' ? '0' : undefined} max={field.name === 'unit_count' ? '500' : undefined} required={field.required} value={form[field.name] ?? ''} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })} />}
               </label>
             ))}
+            {section === 'Compounds and units' && <p className="admin-form-hint">Units are created automatically with numbers starting at 1. Enter 0 if this compound does not need units yet.</p>}
+            {['Residents', 'Businesses and institutions'].includes(section) && (!availableCompounds.length || !availableUnits.length) && (
+              <div className="admin-setup-prompt">
+                <div><strong>Set up compounds and units first</strong><span>Choose a compound and numbered unit after the estate structure is created.</span></div>
+                <button type="button" onClick={() => { setShowForm(false); onNavigate?.('Compounds and units') }}>Add compound + units</button>
+              </div>
+            )}
             {section === 'Residents' && <p className="admin-form-hint">The invited person completes their own details. Their account remains pending until an administrator approves it; only a super admin can invite another administrator.</p>}
             <button className="admin-primary-button" type="submit">Save</button>
           </form>
@@ -380,7 +435,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
             <span className="admin-record-copy"><strong>{row.name}</strong><small>{row.location}{row.amount ? ` · ${row.amount}` : ''}</small></span>
             <span className={`admin-record-status status-${String(row.status).toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`}>{row.status}</span>
             {section === 'Payments' && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => verifyPayment(row.id)}>Verify</button>}
-            {section === 'Residents' && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => approveRegistration(row.id)}>Approve</button>}
+            {section === 'Residents' && isPrimarySuperAdmin && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => approveRegistration(row.id)}>Approve</button>}
             {section === 'Visitors' && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => updateResource('visitors', row.id, { status: 'approved' })}>Approve</button>}
             {section === 'Visitors' && row.status === 'arrived' && <button className="admin-record-action" type="button" onClick={() => updateResource('visitors', row.id, { status: 'departed' })}>Record exit</button>}
             {section === 'Security' && row.status === 'open' && <button className="admin-record-action" type="button" onClick={() => updateResource('incidents', row.id, { status: 'investigating' })}>Investigate</button>}
