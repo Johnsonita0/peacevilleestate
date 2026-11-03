@@ -8,7 +8,7 @@ function initials(name = '') {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'U'
 }
 
-function ProfilePhotoUpload({ compact = false }) {
+function ProfilePhotoUpload({ compact = false, onOpenProfile }) {
   const inputRef = useRef(null)
   const { profile, refreshProfile } = useAuth()
   const [photoUrl, setPhotoUrl] = useState(null)
@@ -59,10 +59,10 @@ function ProfilePhotoUpload({ compact = false }) {
       <button
         className="profile-photo-button"
         type="button"
-        aria-label={busy ? 'Uploading profile photo' : 'Change profile photo'}
-        title={busy ? 'Uploading profile photo' : 'Change profile photo'}
+        aria-label={onOpenProfile ? 'Open administrator profile' : busy ? 'Uploading profile photo' : 'Change profile photo'}
+        title={onOpenProfile ? 'Open administrator profile' : busy ? 'Uploading profile photo' : 'Change profile photo'}
         disabled={busy}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => onOpenProfile ? onOpenProfile() : inputRef.current?.click()}
       >
         <span className="profile-photo-avatar">
           {photoUrl ? <img src={photoUrl} alt="" /> : <span>{initials(name)}</span>}
@@ -73,7 +73,7 @@ function ProfilePhotoUpload({ compact = false }) {
             <small>{busy ? 'Uploading photo…' : 'Change profile photo'}</small>
           </span>
         )}
-        <Camera className="profile-photo-camera" size={compact ? 16 : 15} />
+        {!onOpenProfile && <Camera className="profile-photo-camera" size={compact ? 16 : 15} />}
       </button>
       {error && <span className="profile-photo-error" role="alert">{error}</span>}
     </div>

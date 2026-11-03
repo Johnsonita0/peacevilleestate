@@ -124,14 +124,21 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    if (supabase) {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Supabase sign-out failed:', error)
-        throw new Error('We could not sign you out. Please try again.')
+    let signOutError = null
+    try {
+      if (supabase) {
+        const { error } = await supabase.auth.signOut({ scope: 'local' })
+        signOutError = error
       }
+    } catch (error) {
+      signOutError = error
+    } finally {
+      setAuth({ session: null, profile: null, loading: false })
     }
-    setAuth({ session: null, profile: null, loading: false })
+    if (signOutError) {
+      console.error('Supabase sign-out failed:', signOutError)
+      throw new Error('Your session was cleared on this device, but sign-out could not be confirmed. Please try again when online.')
+    }
   }
 
   async function refreshProfile() {

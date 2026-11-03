@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Bell, ChevronDown, Search, ShieldCheck } from 'lucide-react'
+import { Bell, Search, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { api } from '../lib/api'
 import ApiConnectionStatus from './ApiConnectionStatus'
+import ProfilePhotoUpload from './ProfilePhotoUpload'
 import '../css/admin-notifications.css'
 
 function Topbar({ activeSection, onNavigate }) {
@@ -57,7 +58,7 @@ function Topbar({ activeSection, onNavigate }) {
           <button className="icon-button notification-button" aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`} aria-expanded={showNotifications} onClick={() => setShowNotifications((current) => !current)}><Bell size={18} />{unreadCount > 0 && <span className="admin-notification-count">{unreadCount > 9 ? '9+' : unreadCount}</span>}</button>
           {showNotifications && <section className="admin-notification-menu" aria-label="Notifications"><header><strong>Notifications</strong><small>{unreadCount} unread</small></header>{notifications.length ? notifications.map((notification) => <button className={`admin-notification-item${notification.read_at ? '' : ' unread'}`} type="button" key={notification.id} onClick={() => openNotification(notification)}><strong>{notification.title}</strong><span>{notification.body}</span><small>{new Date(notification.created_at).toLocaleString('en-NG')}</small></button>) : <p className="admin-notification-empty">No notifications yet.</p>}</section>}
         </div>
-        <button className="topbar-profile" aria-label="Account menu"><span className="account-avatar">AO</span><ChevronDown size={14} /></button>
+        <ProfilePhotoUpload compact onOpenProfile={() => onNavigate?.('Profile')} />
       </div>
     </header>
   )

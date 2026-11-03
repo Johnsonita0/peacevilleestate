@@ -51,6 +51,8 @@ const mobileNavigation = [
 
 function EstateDashboardPage() {
   const [activeSection, setActiveSection] = useState('Overview')
+  const [logoutError, setLogoutError] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const ActivePage = pages[activeSection]
@@ -60,8 +62,17 @@ function EstateDashboardPage() {
   }
 
   async function handleSignOut() {
-    await signOut()
-    navigate('/admin', { replace: true })
+    if (signingOut) return
+    setSigningOut(true)
+    setLogoutError('')
+    try {
+      await signOut()
+      navigate('/admin', { replace: true })
+    } catch (error) {
+      console.error('Administrator sign-out failed:', error)
+      setLogoutError(error.message || 'We could not sign you out. Please try again.')
+      setSigningOut(false)
+    }
   }
 
   return (
@@ -69,8 +80,9 @@ function EstateDashboardPage() {
       <Sidebar activeSection={activeSection} onNavigate={navigateToSection} onSignOut={handleSignOut} />
       <main className="main-area">
         <Topbar activeSection={activeSection} onNavigate={navigateToSection} />
+        {logoutError && <p className="admin-toast" role="alert">{logoutError}</p>}
         <div className="content-wrap">
-          <ActivePage onNavigate={navigateToSection} />
+          <ActivePage onNavigate={navigateToSection} onSignOut={handleSignOut} />
         </div>
       </main>
       <nav className="admin-mobile-nav" aria-label="Administrator navigation">
