@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import {
   ADMIN_ROLES,
+  BUSINESS_ROLES,
   dashboardPathForRole,
   RESIDENT_ROLES,
   SECURITY_ROLES,
@@ -12,6 +13,7 @@ import SplashPage from './pages/SplashPage'
 
 const SignInPage = lazy(() => import('./pages/SignInPage'))
 const BusinessRegistrationPage = lazy(() => import('./pages/BusinessRegistrationPage'))
+const BusinessDashboardPage = lazy(() => import('./pages/BusinessDashboardPage'))
 const PwaLifecycle = lazy(() => import('./components/PwaLifecycle'))
 const EstateDashboardPage = lazy(() => import('./pages/EstateDashboardPage'))
 const RoleDashboardPage = lazy(() => import('./pages/RoleDashboardPage'))
@@ -36,6 +38,7 @@ function App() {
           <Routes>
             <Route path="/" element={<SignInPortal portal="resident" />} />
             <Route path="/admin" element={<SignInPortal portal="admin" />} />
+            <Route path="/business" element={<SignInPortal portal="business" />} />
             <Route path="/register" element={<RegistrationPage />} />
             <Route path="/business-register" element={<BusinessRegistrationPage />} />
             <Route
@@ -51,6 +54,14 @@ function App() {
               element={(
                 <ProtectedRoute allowedRoles={RESIDENT_ROLES}>
                   <RoleDashboardPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/business/dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={BUSINESS_ROLES}>
+                  <BusinessDashboardPage />
                 </ProtectedRoute>
               )}
             />

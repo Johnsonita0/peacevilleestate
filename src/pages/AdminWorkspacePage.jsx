@@ -99,6 +99,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
   const [registrationLink, setRegistrationLink] = useState('')
   const [invitationEmail, setInvitationEmail] = useState('')
   const [invitationEmailSent, setInvitationEmailSent] = useState(false)
+  const [invitationEmailError, setInvitationEmailError] = useState('')
   const [compoundImage, setCompoundImage] = useState(null)
 
   useEffect(() => {
@@ -245,6 +246,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
       setRegistrationLink(result.registration_url)
       setInvitationEmail(result.email)
       setInvitationEmailSent(Boolean(result.email_sent))
+      setInvitationEmailError(result.email_error || '')
     }
     setForm({})
     setCompoundImage(null)
@@ -374,7 +376,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
       {registrationLink && (
         <div className="admin-modal-backdrop" role="presentation">
           <div className="admin-ad-form" role="dialog" aria-modal="true" aria-labelledby="registration-link-title">
-            <div className="admin-form-heading"><div><h2 id="registration-link-title">{section === 'Businesses and institutions' ? 'Business registration link ready' : 'Resident registration link ready'}</h2><p>{invitationEmailSent ? `Emailed to ${invitationEmail}; expires in 7 days.` : `Email delivery is not configured. Share with ${invitationEmail}; expires in 7 days.`}</p></div><button type="button" className="admin-icon-button" aria-label="Close" onClick={() => setRegistrationLink('')}><X size={18} /></button></div>
+            <div className="admin-form-heading"><div><h2 id="registration-link-title">{section === 'Businesses and institutions' ? 'Business registration link ready' : 'Resident registration link ready'}</h2><p>{invitationEmailSent ? `Emailed to ${invitationEmail}; expires in 7 days.` : `${invitationEmailError || 'Email delivery is not configured.'} Share with ${invitationEmail}; the link expires in 7 days.`}</p></div><button type="button" className="admin-icon-button" aria-label="Close" onClick={() => setRegistrationLink('')}><X size={18} /></button></div>
             <label>Share this link<input readOnly value={registrationLink} onFocus={(event) => event.target.select()} /></label>
             <div className="admin-invitation-actions">
               <button className="admin-primary-button" type="button" onClick={async () => { try { await navigator.clipboard.writeText(registrationLink); setNotice('Registration link copied.') } catch (error) { console.error('Registration link copy failed:', error); setNotice('Copy is unavailable. Select and copy the link.') } }}>Copy link</button>

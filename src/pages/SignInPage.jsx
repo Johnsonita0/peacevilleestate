@@ -14,9 +14,10 @@ function SignInPage({ portal = 'resident' }) {
   const navigate = useNavigate()
   const { signIn } = useAuth()
   const isAdminPortal = portal === 'admin'
+  const isBusinessPortal = portal === 'business'
 
   function updateIdentifier(value) {
-    if (isAdminPortal) {
+    if (isAdminPortal || isBusinessPortal) {
       setIdentifier(value)
       return
     }
@@ -37,6 +38,10 @@ function SignInPage({ portal = 'resident' }) {
     setNotice('')
 
     if (mode === 'invitation') {
+      if (isBusinessPortal && invitationCode.trim()) {
+        navigate(`/business-register?invite=${encodeURIComponent(invitationCode.trim())}`)
+        return
+      }
       setNotice('Invitation verification will be available when registration is connected.')
       return
     }
@@ -76,14 +81,16 @@ function SignInPage({ portal = 'resident' }) {
                     ? 'Administrator sign in'
                     : 'Welcome to Peaceville'}
             </h1>
-            <p>
-              {isInvitation
+                <p>
+                    {isInvitation
                 ? 'Enter the invitation code shared by your estate management.'
                 : isReset
-                  ? `Enter your ${isAdminPortal ? 'email' : 'phone number'} to recover your account.`
+                        ? `Enter your ${isAdminPortal ? 'email' : isBusinessPortal ? 'phone number or email' : 'phone number'} to recover your account.`
                   : isAdminPortal
                     ? 'Authorized estate administrators only. Sign in with your registered email.'
-                    : 'Sign in to pay levies, invite visitors and stay informed.'}
+                          : isBusinessPortal
+                            ? 'Sign in to manage your business levy, visitors and estate notices.'
+                            : 'Sign in to pay levies, invite visitors and stay informed.'}
             </p>
           </header>
 
@@ -102,17 +109,17 @@ function SignInPage({ portal = 'resident' }) {
             ) : (
               <>
                 <label className="auth-field">
-                  <span>{isAdminPortal ? 'Email address' : 'Phone number'}</span>
+                  <span>{isAdminPortal ? 'Email address' : isBusinessPortal ? 'Phone number or email' : 'Phone number'}</span>
                   <input
-                    type={isAdminPortal ? 'email' : 'tel'}
-                    autoComplete={isAdminPortal ? 'email' : 'tel-national'}
-                    inputMode={isAdminPortal ? 'email' : 'tel'}
+                    type={isAdminPortal ? 'email' : isBusinessPortal ? 'text' : 'tel'}
+                    autoComplete={isAdminPortal ? 'email' : isBusinessPortal ? 'username' : 'tel-national'}
+                    inputMode={isAdminPortal ? 'email' : isBusinessPortal ? 'text' : 'tel'}
                     value={identifier}
                     onChange={(event) => updateIdentifier(event.target.value)}
-                    placeholder={isAdminPortal ? 'admin@peaceville.ng' : '08012345678'}
-                    pattern={isAdminPortal ? undefined : '\\+?[0-9]{10,15}'}
-                    minLength={isAdminPortal ? undefined : 10}
-                    maxLength={isAdminPortal ? undefined : 16}
+                    placeholder={isAdminPortal ? 'admin@peaceville.ng' : isBusinessPortal ? 'Phone number or business email' : '08012345678'}
+                    pattern={isAdminPortal || isBusinessPortal ? undefined : '\\+?[0-9]{10,15}'}
+                    minLength={isAdminPortal || isBusinessPortal ? undefined : 10}
+                    maxLength={isAdminPortal || isBusinessPortal ? undefined : 120}
                     required
                   />
                 </label>
@@ -143,7 +150,7 @@ function SignInPage({ portal = 'resident' }) {
             </button>
 
             {mode === 'signin' && !isAdminPortal ? (
-              <button className="auth-secondary" type="button" onClick={() => changeMode('invitation')}>
+              <button className="auth-secondary" type="button" onClick={() => isBusinessPortal ? changeMode('invitation') : changeMode('invitation')}>
                 I have an invitation code
               </button>
             ) : mode !== 'signin' ? (
@@ -159,7 +166,9 @@ function SignInPage({ portal = 'resident' }) {
         <p className="auth-footnote">
           {isAdminPortal
             ? 'Administrator access is limited to authorized estate management.'
-            : 'Accounts are created by estate management. Never share your password or codes.'}
+            : isBusinessPortal
+              ? 'Business accounts are invited by estate management. Never share your password or codes.'
+              : 'Accounts are created by estate management. Never share your password or codes.'}
         </p>
       </section>
     </main>

@@ -4,13 +4,15 @@ import { supabase } from '../lib/supabase'
 export const ADMIN_ROLES = ['super_admin', 'estate_admin']
 export const SECURITY_ROLES = ['estate_security', 'compound_security']
 export const RESIDENT_ROLES = ['compound_rep', 'landlord', 'tenant']
-const SUPPORTED_ROLES = [...ADMIN_ROLES, ...SECURITY_ROLES, ...RESIDENT_ROLES]
+export const BUSINESS_ROLES = ['business_owner']
+const SUPPORTED_ROLES = [...ADMIN_ROLES, ...SECURITY_ROLES, ...RESIDENT_ROLES, ...BUSINESS_ROLES]
 
 const AuthContext = createContext(null)
 
 export function dashboardPathForRole(role) {
   if (ADMIN_ROLES.includes(role)) return '/admin/dashboard'
   if (SECURITY_ROLES.includes(role)) return '/security/dashboard'
+  if (BUSINESS_ROLES.includes(role)) return '/business/dashboard'
   if (RESIDENT_ROLES.includes(role)) return '/dashboard'
   return '/'
 }
@@ -90,7 +92,7 @@ export function AuthProvider({ children }) {
       throw new Error('Authentication is not configured yet. Add the Supabase project URL and anon key to frontend environment settings.')
     }
 
-    const credentials = portal === 'admin'
+    const credentials = portal === 'admin' || (portal === 'business' && identifier.includes('@'))
       ? { email: identifier.trim().toLowerCase(), password }
       : { phone: normalizeNigerianPhone(identifier), password }
     const { data, error } = await supabase.auth.signInWithPassword(credentials)
@@ -110,13 +112,22 @@ export function AuthProvider({ children }) {
     }
 
     const isAdmin = ADMIN_ROLES.includes(profile.role)
+    const isBusiness = BUSINESS_ROLES.includes(profile.role)
     if (portal === 'admin' && !isAdmin) {
       await supabase.auth.signOut()
       throw new Error('This account does not have administrator access.')
     }
+    if (portal === 'business' && !isBusiness) {
+      await supabase.auth.signOut()
+      throw new Error('This account does not have business access.')
+    }
     if (portal !== 'admin' && isAdmin) {
       await supabase.auth.signOut()
       throw new Error('Administrators must sign in through /admin.')
+    }
+    if (portal !== 'business' && isBusiness) {
+      await supabase.auth.signOut()
+      throw new Error('Business accounts must sign in through /business.')
     }
 
     setAuth({ session: data.session, profile, loading: false })
