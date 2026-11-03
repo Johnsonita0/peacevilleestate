@@ -310,6 +310,19 @@ function AdminWorkspacePage({ section, onNavigate }) {
     }
   }
 
+  async function approveBusiness(businessId) {
+    if (!session?.access_token) return
+    try {
+      await api.post(`/admin/businesses/${businessId}/approve`, {}, { accessToken: session.access_token })
+      setNotice('Business approved successfully.')
+      const { data } = await api.get('/admin/resources/businesses', { accessToken: session.access_token })
+      setRows((data ?? []).map((row) => displayRow('Businesses and institutions', row)))
+    } catch (error) {
+      console.error('Business approval failed:', error)
+      setNotice(error.message || 'We could not approve this business. Refresh and try again.')
+    }
+  }
+
   function exportRows() {
     const csv = ['Name,Details,Status', ...filteredRows.map((row) => [row.name, row.location, row.status].map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(','))].join('\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
@@ -444,7 +457,7 @@ function AdminWorkspacePage({ section, onNavigate }) {
             {section === 'Visitors' && row.status === 'arrived' && <button className="admin-record-action" type="button" onClick={() => updateResource('visitors', row.id, { status: 'departed' })}>Record exit</button>}
             {section === 'Security' && row.status === 'open' && <button className="admin-record-action" type="button" onClick={() => updateResource('incidents', row.id, { status: 'investigating' })}>Investigate</button>}
             {section === 'Security' && ['open', 'investigating'].includes(row.status) && <button className="admin-record-action" type="button" onClick={() => updateResource('incidents', row.id, { status: 'resolved' })}>Resolve</button>}
-            {section === 'Businesses and institutions' && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => updateResource('businesses', row.id, { status: 'active' })}>Approve</button>}
+            {section === 'Businesses and institutions' && row.status === 'pending' && <button className="admin-record-action" type="button" onClick={() => approveBusiness(row.id)}>Approve</button>}
           </article>
         )) : <p className="admin-empty-state">No matching records.</p>}
       </div>
