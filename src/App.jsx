@@ -12,6 +12,7 @@ import SplashPage from './pages/SplashPage'
 
 const SignInPage = lazy(() => import('./pages/SignInPage'))
 const BusinessRegistrationPage = lazy(() => import('./pages/BusinessRegistrationPage'))
+const PwaLifecycle = lazy(() => import('./components/PwaLifecycle'))
 const EstateDashboardPage = lazy(() => import('./pages/EstateDashboardPage'))
 const RoleDashboardPage = lazy(() => import('./pages/RoleDashboardPage'))
 const SecurityDashboardPage = lazy(() => import('./pages/SecurityDashboardPage'))
@@ -33,8 +34,9 @@ function App() {
   }
 
   return (
-    <Suspense fallback={<main className="route-loading" role="status">Preparing your workspace...</main>}>
-      <Routes>
+    <>
+      <Suspense fallback={<main className="route-loading" role="status">Preparing your workspace...</main>}>
+        <Routes>
         <Route path="/" element={<SignInPortal portal="resident" />} />
         <Route path="/admin" element={<SignInPortal portal="admin" />} />
         <Route path="/register" element={<RegistrationPage />} />
@@ -64,8 +66,10 @@ function App() {
           )}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+      <Suspense fallback={null}><PwaLifecycle /></Suspense>
+    </>
   )
 }
 
