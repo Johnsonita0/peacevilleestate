@@ -14,7 +14,7 @@ function PwaLifecycle() {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
-  } = useRegisterSW()
+  } = useRegisterSW({ immediate: true })
 
   useEffect(() => {
     function handleInstallPrompt(event) {

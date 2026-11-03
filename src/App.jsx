@@ -29,45 +29,43 @@ function SignInPortal({ portal }) {
 function App() {
   const [bootState, setBootState] = useState(null)
 
-  if (!bootState) {
-    return <SplashPage onComplete={setBootState} />
-  }
-
   return (
     <>
-      <Suspense fallback={<main className="route-loading" role="status">Preparing your workspace...</main>}>
-        <Routes>
-        <Route path="/" element={<SignInPortal portal="resident" />} />
-        <Route path="/admin" element={<SignInPortal portal="admin" />} />
-        <Route path="/register" element={<RegistrationPage />} />
-        <Route path="/business-register" element={<BusinessRegistrationPage />} />
-        <Route
-          path="/admin/dashboard"
-          element={(
-            <ProtectedRoute allowedRoles={ADMIN_ROLES}>
-              <EstateDashboardPage />
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/dashboard"
-          element={(
-            <ProtectedRoute allowedRoles={RESIDENT_ROLES}>
-              <RoleDashboardPage />
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/security/dashboard"
-          element={(
-            <ProtectedRoute allowedRoles={SECURITY_ROLES}>
-              <SecurityDashboardPage />
-            </ProtectedRoute>
-          )}
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      {bootState ? (
+        <Suspense fallback={<main className="route-loading" role="status">Preparing your workspace...</main>}>
+          <Routes>
+            <Route path="/" element={<SignInPortal portal="resident" />} />
+            <Route path="/admin" element={<SignInPortal portal="admin" />} />
+            <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/business-register" element={<BusinessRegistrationPage />} />
+            <Route
+              path="/admin/dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={ADMIN_ROLES}>
+                  <EstateDashboardPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={RESIDENT_ROLES}>
+                  <RoleDashboardPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/security/dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={SECURITY_ROLES}>
+                  <SecurityDashboardPage />
+                </ProtectedRoute>
+              )}
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      ) : <SplashPage onComplete={setBootState} />}
       <Suspense fallback={null}><PwaLifecycle /></Suspense>
     </>
   )

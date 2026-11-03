@@ -10,7 +10,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'prompt',
-      includeAssets: ['peaceville-icon.svg', 'pwa-192.svg', 'pwa-512.svg'],
+      includeAssets: ['peaceville-icon.svg', 'pwa-180.png', 'pwa-192.png', 'pwa-512.png', 'pwa-192.svg', 'pwa-512.svg'],
       manifest: {
         id: '/',
         name: 'Peaceville Estate',
@@ -24,6 +24,8 @@ export default defineConfig({
         theme_color: '#174a43',
         categories: ['lifestyle', 'utilities'],
         icons: [
+          { src: '/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           { src: '/pwa-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
           { src: '/pwa-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
         ],
