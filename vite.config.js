@@ -10,7 +10,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'prompt',
-      includeAssets: ['peaceville-icon.svg', 'pwa-180.png', 'pwa-192.png', 'pwa-512.png', 'pwa-192.svg', 'pwa-512.svg'],
+      includeAssets: ['peaceville-icon.svg', 'pwa-180.png'],
       manifest: {
         id: '/',
         name: 'Peaceville Estate',
@@ -31,7 +31,7 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,woff2}'],
         globIgnores: ['_design-reference.html'],
       },
     }),
